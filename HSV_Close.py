@@ -39,7 +39,7 @@ cv2.createTrackbar('closing_kernely', 'colors', 1, 20, nothing)
 cv2.resizeWindow('colors', 600,600)
 
 while True:
-    frame = cv2.imread(r'C:/Users/valentin/Desktop/kesz_efop/test2.png')
+    frame = cv2.imread(r'PATH TO IMAGE')
     dst = frame
     #dst = cv2.fastNlMeansDenoisingColored(frame,None,2,2,10,5)
     #Define custom matrice kernel
