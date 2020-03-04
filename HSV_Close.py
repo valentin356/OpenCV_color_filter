@@ -1,0 +1,122 @@
+import cv2
+import numpy as np
+from rivgraph.rivers import river_utils as ru
+from scipy import misc
+import numpy as np
+import gdal
+from matplotlib import pyplot as plt
+from rivgraph import mask_to_graph
+import cv2
+
+def nothing(x):
+    pass
+
+def midline(img):
+    from rivgraph.rivers import river_utils as ru
+    from scipy import misc
+    import numpy as np
+    from matplotlib import pyplot as plt
+    import cv2
+    
+    I = cv2.imread(img)
+    Imask = np.zeros((I.shape[0], I.shape[1]), dtype=np.bool)
+    Imask[I[:,:,0] != 255] = True
+    coords, widths = ru.mask_to_centerline(Imask, 'ew')
+    
+    plt.imshow(Imask)
+    plt.plot(coords[:,0], coords[:,1])
+    plt.show()
+
+    
+#SZÍN TRACK // CSÚSZKÁK
+cv2.namedWindow('szinek')
+cv2.createTrackbar('LH', 'szinek', 0, 255, nothing)
+cv2.createTrackbar('UH', 'szinek', 255, 255, nothing)
+cv2.createTrackbar('LS', 'szinek', 0, 255, nothing)
+cv2.createTrackbar('US', 'szinek', 255, 255, nothing)
+cv2.createTrackbar('LV', 'szinek', 0, 255, nothing)
+cv2.createTrackbar('UV', 'szinek', 255, 255, nothing)
+cv2.createTrackbar('erosion_kernelx', 'szinek', 1, 20, nothing)
+cv2.createTrackbar('erosion_kernely', 'szinek', 1, 20, nothing)
+cv2.createTrackbar('erosion_iteration', 'szinek', 1, 20, nothing)
+cv2.createTrackbar('gradient', 'szinek', 0, 1, nothing)
+cv2.createTrackbar('closing_kernelx', 'szinek', 1, 20, nothing)
+cv2.createTrackbar('closing_kernely', 'szinek', 1, 20, nothing)
+
+cv2.resizeWindow('szinek', 600,600)
+
+while True:
+    frame = cv2.imread(r'C:/Users/valentin/Desktop/kesz_efop/test2.png')
+    dst = frame
+    #dst = cv2.fastNlMeansDenoisingColored(frame,None,2,2,10,5)
+    ##MÁTRIX
+    #kernel = np.array([[0, 0, 0],
+    #                   [0, 1, 0],
+    #                   [0, 0, 0]], np.uint8)
+
+    #dst = cv2.filter2D(frame,-1,kernel)
+    #dst = cv2.GaussianBlur(dst,(9,9),0)
+    hsv = cv2.cvtColor(dst, cv2.COLOR_BGR2HSV)
+
+    l_h = cv2.getTrackbarPos('LH', 'szinek')
+    u_h = cv2.getTrackbarPos('UH', 'szinek')    
+    l_s = cv2.getTrackbarPos('LS', 'szinek')
+    u_s = cv2.getTrackbarPos('US', 'szinek')    
+    l_v = cv2.getTrackbarPos('LV', 'szinek')
+    u_v = cv2.getTrackbarPos('UV', 'szinek')
+    
+    ex = cv2.getTrackbarPos('erosion_kernelx', 'szinek')
+    ey = cv2.getTrackbarPos('erosion_kernely', 'szinek')
+    eit = cv2.getTrackbarPos('erosion_iteration', 'szinek')
+    grad = cv2.getTrackbarPos('gradient', 'szinek')
+    cx = cv2.getTrackbarPos('closing_kernelx', 'szinek')
+    cy = cv2.getTrackbarPos('closing_kernely', 'szinek')
+
+    #Mask értékek HSV-ben
+    lower_black = np.array([l_h,l_s,l_v]) #50,10/0,0 kékek sávja
+    upper_black = np.array([u_h,u_s,u_v]) #150,255,255#
+    
+    mask = cv2.inRange(hsv, lower_black, upper_black)
+    erosion_kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(ex,ey))
+    closing_kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(cx,cy))
+    #closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel) # closing
+    #closed = cv2.dilate(mask,kernel,iterations = 1) # dilation
+    erosion = cv2.erode(mask,erosion_kernel,iterations = eit)
+    closed = cv2.morphologyEx(erosion, cv2.MORPH_CLOSE, closing_kernel)
+    x = mask_to_graph.skeletonize_mask(closed)
+	
+    if grad == 1:
+        closed = cv2.morphologyEx(closed, cv2.MORPH_GRADIENT, closing_kernel)
+		
+    x = mask_to_graph.skeletonize_mask(closed)
+    x = np.float32(x)
+    cv2.imshow('frame', frame)
+    cv2.imshow('mask', mask)
+    cv2.imshow('closed', closed)
+    cv2.imshow('thinned',np.float32(x))
+    key = cv2.waitKey(1)
+    if key == 27:
+        break
+cv2.imwrite('xy.tif',x)
+cv2.destroyAllWindows()
+
+#y, z = mask_to_graph.skel_to_graph(x)
+#print(z)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
