@@ -91,22 +91,3 @@ while True:
 #Write image
 #cv2.imwrite('result.tif',resultSkeletonF)
 cv2.destroyAllWindows()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
